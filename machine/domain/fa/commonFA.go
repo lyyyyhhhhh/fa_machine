@@ -3,8 +3,6 @@ package fa
 import (
 	"fmt"
 	"simpleCode/common/sets"
-	"simpleCode/common/utils"
-	"simpleCode/machine/domain/faAbility"
 	"strings"
 )
 
@@ -25,7 +23,8 @@ func NewCommonFA() *CommonFA {
 	}
 }
 
-func (fa *CommonFA) Build(pattern string) []faAbility.AutomatonAbility {
+func (fa *CommonFA) Build(pattern string) error {
+	var err error // 正则表达式错误处理
 	cur := fa
 	for i := 0; i < len(pattern); i++ {
 		c := pattern[i]
@@ -62,16 +61,36 @@ func (fa *CommonFA) Build(pattern string) []faAbility.AutomatonAbility {
 	}
 	fa.endStates.Add(cur)
 	fmt.Println(fa.toDot())
-	return utils.ToInterfaceSlice[*CommonFA, faAbility.AutomatonAbility](fa.endStates.ToSlices())
+	return err
+}
+
+// IsMatch 控制
+func (fa *CommonFA) IsMatch(s string) bool {
+	cur := fa
+	curStates := sets.NewSet[*CommonFA]()
+	curStates.Add(cur) //初始状态
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		nextStates := sets.NewSet[*CommonFA]()
+		for state := range curStates {
+			// 遍历状态集合, 得到此状态通过此字符可以流转到的下个状态集合
+			nextStates.AddAll(state.process(c))
+		}
+		if len(nextStates) == 0 {
+			return false
+		}
+		curStates = nextStates
+	}
+	return curStates.ContainsOne(fa.endStates.ToSlices())
 }
 
 // Process 根据输入的字符进行状态流转, 保存下一步的状态
-func (fa *CommonFA) Process(c byte) []faAbility.AutomatonAbility {
+func (fa *CommonFA) process(c byte) []*CommonFA {
 	states := fa.nexts[c]
 	if extras, ok := fa.nexts['.']; ok {
 		states = append(states, extras...)
 	}
-	return utils.ToInterfaceSlice[*CommonFA, faAbility.AutomatonAbility](states)
+	return states
 }
 
 func (fa *CommonFA) getOrSetFA(cur *CommonFA, idx int) *CommonFA {
