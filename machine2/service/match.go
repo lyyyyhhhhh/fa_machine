@@ -23,7 +23,7 @@ func IsMatch(model string, s string, p string) bool {
 		return false
 	}
 	// 2. 匹配
-	return faMachine.IsMatch(s)
+	return faMachine.IsMatch2(s)
 }
 
 func build(model string, pattern string) (ability.MachineAbility, error) {

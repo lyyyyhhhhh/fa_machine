@@ -39,7 +39,7 @@ func (node *BaseState) Process(c byte) []ability.State {
 	return node.Nexts[c].ToSlices()
 }
 
-func (m *BaseMachine) IsMatch(s string) bool {
+func (m *BaseMachine) IsMatch2(s string) bool {
 	curStates := sets.NewSet[ability.State]()
 	curStates.Add(m.StartState)
 
