@@ -1,7 +1,7 @@
 package machine
 
 import (
-	"simpleCode/machine/domain"
+	"fa_machine/machine/domain"
 )
 
 // IsMatch 控制

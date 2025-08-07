@@ -1,7 +1,7 @@
 package fa
 
 import (
-	"simpleCode/common/sets"
+	"fa_machine/common/sets"
 )
 
 type SpecFA struct {

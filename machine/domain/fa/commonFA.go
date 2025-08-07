@@ -2,16 +2,26 @@ package fa
 
 import (
 	"fmt"
-	"simpleCode/common/sets"
 	"strings"
+
+	"fa_machine/common/sets"
 )
 
 type CommonFA struct {
-	uniqueState map[int]*CommonFA   // 状态数最多等于正则表达式长度
-	visited     sets.Set[*CommonFA] // 构建状态时, 遇到'*'防止绕回去
-	pre         *CommonFA
+	uniqueState map[int]*CommonFA    // 状态数最多等于正则表达式长度
+	visited     sets.Set[*CommonFA]  // 构建状态时, 遇到'*'防止绕回去
 	nexts       map[byte][]*CommonFA //根据指定字符可以到达的状态集合, 一个字符到达的状态可能为多个, 例如a*a
 	endStates   sets.Set[*CommonFA]
+}
+
+type RegexMachine struct {
+	StartState  *RegexState
+	Visited     sets.Set[*RegexState]
+	UniqueState map[int]*CommonFA
+}
+
+type RegexState struct {
+	nexts map[byte][]*RegexState
 }
 
 func NewCommonFA() *CommonFA {
@@ -36,12 +46,12 @@ func (fa *CommonFA) Build(pattern string) error {
 		case '?':
 			// '?'不处理
 		default:
-			cur.nexts[c] = append(cur.nexts[c], fa.getOrSetFA(cur, i))
+			cur.nexts[c] = append(cur.nexts[c], fa.getOrSetFA(i))
 			count := 0
 			judgeIdx := i + 1 + count*2 // 判断指定位置是否为*, 如果为*, 表示可以从下一个字符调到后一个状态
 			for judgeIdx < len(pattern) && (pattern[judgeIdx] == '*' || pattern[judgeIdx] == '?') {
 				if judgeIdx+1 < len(pattern) {
-					cur.nexts[pattern[judgeIdx+1]] = append(cur.nexts[pattern[judgeIdx+1]], fa.getOrSetFA(cur, judgeIdx+1))
+					cur.nexts[pattern[judgeIdx+1]] = append(cur.nexts[pattern[judgeIdx+1]], fa.getOrSetFA(judgeIdx+1))
 				} else {
 					// 最后一个字符为*, 表示可以该状态为最终状态之一
 					fa.endStates.Add(cur)
@@ -93,13 +103,12 @@ func (fa *CommonFA) process(c byte) []*CommonFA {
 	return states
 }
 
-func (fa *CommonFA) getOrSetFA(cur *CommonFA, idx int) *CommonFA {
+func (fa *CommonFA) getOrSetFA(idx int) *CommonFA {
 	state := fa.uniqueState[idx]
 	if state == nil {
 		state = NewCommonFA()
 		fa.uniqueState[idx] = state
 	}
-	state.pre = cur
 	return state
 }
 
