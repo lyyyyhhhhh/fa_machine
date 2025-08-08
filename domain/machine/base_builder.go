@@ -20,17 +20,13 @@ func NewBaseMachineBuilder(startState ability.State) *BaseMachineBuilder {
 	}
 }
 
-func (b *BaseMachineBuilder) BuildMachine(pattern string) (ability.MachineAbility, error) {
-	machine := b.Machine
+func (r *BaseMachineBuilder) BuildMachine(pattern string, handleLogic ability.HandleCharAbility) (ability.MachineAbility, error) {
+	machine := r.Machine
 	cur := machine.StartState
 	for i := 0; i < len(pattern); i++ {
-		b.GetHandlerByteFunc(pattern[i])(pattern, i)
+		handleLogic.GetHandlerByteFunc(pattern[i])(pattern, i)
 	}
 	machine.EndStates.Add(cur)
 	fmt.Println(machine.ToDot())
 	return machine, nil
-}
-
-func (b *BaseMachineBuilder) GetHandlerByteFunc(c byte) ability.HandleCharFunc {
-	return nil
 }

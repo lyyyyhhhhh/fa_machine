@@ -9,12 +9,31 @@ import (
 	"fmt"
 )
 
-// 工厂+策略模式, 只暴露方法
+var (
+	commonBuilder            *common.CommonMachineBuilder
+	regexBuilder             *regex.RegexMachineBuilder
+	specBuilder              *special.SpecMachineBuilder
+	ModelToBuilder           map[constant.MachineType]ability.MachineBuilder
+	ModelToHandleCharAbility map[constant.MachineType]ability.HandleCharAbility
+)
 
-var ModelToBuilder = map[constant.MachineType]ability.MachineBuilder{
-	constant.SpecialFA:    special.NewSpecMachineBuilder(),
-	constant.CommonSelfFA: regex.NewRegexMachineBuilder(),
-	constant.CommonFA:     common.NewCommonMachineBuilder(),
+func init() {
+	regexBuilder = regex.NewRegexMachineBuilder()
+	commonBuilder = common.NewCommonMachineBuilder()
+	specBuilder = special.NewSpecMachineBuilder()
+
+	// 工厂+策略模式, 只暴露方法
+	ModelToBuilder = map[constant.MachineType]ability.MachineBuilder{
+		constant.SpecialFA:    specBuilder,
+		constant.CommonSelfFA: regexBuilder,
+		constant.CommonFA:     commonBuilder,
+	}
+
+	ModelToHandleCharAbility = map[constant.MachineType]ability.HandleCharAbility{
+		constant.SpecialFA:    specBuilder,
+		constant.CommonSelfFA: regexBuilder,
+		constant.CommonFA:     commonBuilder,
+	}
 }
 
 // IsMatch 控制
@@ -33,5 +52,9 @@ func build(model string, pattern string) (ability.MachineAbility, error) {
 	if !ok {
 		return nil, fmt.Errorf("unknown constant type: %s", model)
 	}
-	return builderAbility.BuildMachine(pattern)
+	handleAbility, ok := ModelToHandleCharAbility[constant.MachineType(model)]
+	if !ok {
+		return nil, fmt.Errorf("unknown constant type: %s", model)
+	}
+	return builderAbility.BuildMachine(pattern, handleAbility)
 }

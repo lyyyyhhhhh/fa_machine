@@ -2,8 +2,7 @@ package ability
 
 // MachineBuilder 根据模式串构建自动机的基础逻辑 control 不变
 type MachineBuilder interface {
-	HandleCharAbility
-	BuildMachine(pattern string) (MachineAbility, error) // 根据表达式构建自动机
+	BuildMachine(pattern string, buildLogic HandleCharAbility) (MachineAbility, error) // 根据表达式构建自动机
 }
 
 type HandleCharFunc func(pattern string, idx int)
