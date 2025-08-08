@@ -1,8 +1,8 @@
-package domain
+package machine
 
 import (
 	"fa_machine/common/sets"
-	"fa_machine/machine2/domain/ability"
+	"fa_machine/domain/machine/ability"
 	"fmt"
 	"strings"
 )
@@ -30,6 +30,10 @@ func (node *BaseState) AddState(c byte, state ability.State) {
 	node.Nexts[c].Add(state)
 }
 
+func (node *BaseState) RemoveState(c byte, state ability.State) {
+	node.Nexts[c].Remove(state)
+}
+
 func (node *BaseState) GetNexts() map[byte]sets.Set[ability.State] {
 	return node.Nexts
 }
@@ -43,11 +47,10 @@ func (m *BaseMachine) IsMatch2(s string) bool {
 	curStates := sets.NewSet[ability.State]()
 	curStates.Add(m.StartState)
 
-	for i := 0; i < len(s); i++ {
-		c := s[i]
+	for _, c := range s {
 		nextStates := sets.NewSet[ability.State]()
 		for state := range curStates {
-			nextStates.AddAll(state.Process(c))
+			nextStates.AddAll(state.Process(byte(c)))
 		}
 		if len(nextStates) == 0 {
 			return false
@@ -86,9 +89,7 @@ func (m *BaseMachine) ToDot() string {
 			builder.WriteString(fmt.Sprintf("  %s;\n", nodeID(node)))
 		}
 
-		extendNode := node.(ability.ExtendableState)
-
-		for ch, nextList := range extendNode.GetNexts() {
+		for ch, nextList := range node.GetNexts() {
 			for next := range nextList {
 				label := string(ch)
 				if ch == '.' {

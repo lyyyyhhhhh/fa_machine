@@ -2,18 +2,18 @@ package common
 
 import (
 	"fa_machine/common/sets"
-	"fa_machine/machine2/domain"
-	"fa_machine/machine2/domain/ability"
+	"fa_machine/domain/machine"
+	"fa_machine/domain/machine/ability"
 )
 
 type CommonState struct {
-	*domain.BaseState
+	*machine.BaseState
 }
 
 // 创建新的状态节点
 func newCommonState() *CommonState {
 	return &CommonState{
-		BaseState: domain.NewBaseState(),
+		BaseState: machine.NewBaseState(),
 	}
 }
 

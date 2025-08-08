@@ -2,19 +2,19 @@ package regex
 
 import (
 	"fa_machine/common/sets"
-	"fa_machine/machine2/domain"
-	"fa_machine/machine2/domain/ability"
+	"fa_machine/domain/machine"
+	"fa_machine/domain/machine/ability"
 )
 
 type RegexState struct {
-	*domain.BaseState
+	*machine.BaseState
 	pre ability.State
 }
 
 // 创建新的状态节点
 func newRegexState() *RegexState {
 	return &RegexState{
-		BaseState: domain.NewBaseState(),
+		BaseState: machine.NewBaseState(),
 	}
 }
 

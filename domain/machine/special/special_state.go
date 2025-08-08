@@ -2,12 +2,12 @@ package special
 
 import (
 	"fa_machine/common/sets"
-	"fa_machine/machine2/domain"
-	"fa_machine/machine2/domain/ability"
+	"fa_machine/domain/machine"
+	"fa_machine/domain/machine/ability"
 )
 
 type SpecState struct {
-	*domain.BaseState
+	*machine.BaseState
 	isSingleMatch bool // 匹配任意多个字符
 	isStringMatch bool // 匹配任意单个字符
 }
@@ -15,7 +15,7 @@ type SpecState struct {
 // 创建新的状态节点
 func newSpecState() *SpecState {
 	return &SpecState{
-		BaseState: domain.NewBaseState(),
+		BaseState: machine.NewBaseState(),
 	}
 }
 

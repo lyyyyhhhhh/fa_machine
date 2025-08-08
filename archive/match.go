@@ -1,7 +1,7 @@
-package machine
+package archive
 
 import (
-	"fa_machine/machine/domain"
+	"fa_machine/archive/domain"
 )
 
 // IsMatch 控制
