@@ -7,58 +7,61 @@ import (
 )
 
 type CommonMachineBuilder struct {
-	*machine.BaseMachineBuilder
+	machine *machine.BaseMachine
 
-	cur               *CommonState
-	visited           sets.Set[ability.State]
-	uniqueState       map[int]ability.State
-	handleCharFuncMap map[byte]ability.HandleCharFunc
+	cur            *CommonState
+	visited        sets.Set[ability.State]
+	uniqueState    map[int]ability.State
+	ByteHandlerMap map[byte]ability.ByteHandler
 }
 
 func NewCommonMachineBuilder() *CommonMachineBuilder {
 	commonState := newCommonState()
 	builder := &CommonMachineBuilder{
-		BaseMachineBuilder: machine.NewBaseMachineBuilder(commonState),
-		visited:            sets.NewSet[ability.State](),
-		uniqueState:        make(map[int]ability.State),
+		machine: &machine.BaseMachine{
+			StartState: commonState,
+			EndStates:  make(sets.Set[ability.State]),
+		},
+		cur:         commonState,
+		visited:     sets.NewSet[ability.State](),
+		uniqueState: make(map[int]ability.State),
 	}
-	builder.cur = commonState
 
-	builder.handleCharFuncMap = map[byte]ability.HandleCharFunc{
-		'*': builder.handlerStarFunc,
-		'+': builder.handlerAddFunc,
-		'?': builder.handlerQueFunc,
+	builder.ByteHandlerMap = map[byte]ability.ByteHandler{
+		'*': builder.starHandler,
+		'+': builder.addHandler,
+		'?': builder.queHandler,
 	}
 	return builder
 }
 
-func (c *CommonMachineBuilder) getMachine() *machine.BaseMachine {
-	return c.BaseMachineBuilder.Machine
+func (c *CommonMachineBuilder) GetInitMachine() ability.MachineAbility {
+	return c.machine
 }
 
-func (c *CommonMachineBuilder) GetHandlerByteFunc(ch byte) ability.HandleCharFunc {
-	if function, ok := c.handleCharFuncMap[ch]; ok {
+func (c *CommonMachineBuilder) GetByteHandler(ch byte) ability.ByteHandler {
+	if function, ok := c.ByteHandlerMap[ch]; ok {
 		return function
 	}
-	return c.handlerDefaultFunc
+	return c.defaultHandler
 }
 
-func (c *CommonMachineBuilder) handlerStarFunc(pattern string, idx int) {
+func (c *CommonMachineBuilder) starHandler(pattern string, idx int) {
 	// 表示此状态可以通过前面的字符到达原状态
 	ch := pattern[idx-1]
 	c.cur.AddState(ch, c.cur)
 }
 
-func (c *CommonMachineBuilder) handlerAddFunc(pattern string, idx int) {
+func (c *CommonMachineBuilder) addHandler(pattern string, idx int) {
 	// 表示此状态可以通过前面的字符到达原状态
 	ch := pattern[idx-1]
 	c.cur.AddState(ch, c.cur)
 }
 
-func (c *CommonMachineBuilder) handlerQueFunc(pattern string, idx int) {
+func (c *CommonMachineBuilder) queHandler(pattern string, idx int) {
 }
 
-func (c *CommonMachineBuilder) handlerDefaultFunc(pattern string, idx int) {
+func (c *CommonMachineBuilder) defaultHandler(pattern string, idx int) {
 	cur := c.cur
 
 	ch := pattern[idx]
@@ -70,7 +73,7 @@ func (c *CommonMachineBuilder) handlerDefaultFunc(pattern string, idx int) {
 			cur.AddState(pattern[judgeIdx+1], c.getOrSetState(judgeIdx+1))
 		} else {
 			// 最后一个字符为*, 表示可以该状态为最终状态之一
-			c.getMachine().EndStates.Add(cur)
+			c.machine.EndStates.Add(cur)
 		}
 		count++
 		judgeIdx = idx + 1 + count*2 // 判断指定位置是否为*, 如果为*, 表示可以从下一个字符调到后一个状态

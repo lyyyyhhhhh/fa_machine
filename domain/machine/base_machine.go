@@ -73,5 +73,6 @@ func (m *BaseMachine) ToDot() string {
 
 	dfs(m.StartState)
 	builder.WriteString("}")
+	fmt.Println(builder.String())
 	return builder.String()
 }

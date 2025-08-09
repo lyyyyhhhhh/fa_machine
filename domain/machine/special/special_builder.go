@@ -7,46 +7,53 @@ import (
 )
 
 type SpecMachineBuilder struct {
-	*machine.BaseMachineBuilder
+	machine *machine.BaseMachine
 
-	cur               *SpecState
-	visited           sets.Set[ability.State]
-	handleCharFuncMap map[byte]ability.HandleCharFunc
+	cur            *SpecState
+	visited        sets.Set[ability.State]
+	byteHandlerMap map[byte]ability.ByteHandler
 }
 
 func NewSpecMachineBuilder() *SpecMachineBuilder {
-	startState := newSpecState()
+	state := newSpecState()
 	builder := &SpecMachineBuilder{
-		BaseMachineBuilder: machine.NewBaseMachineBuilder(startState),
-		visited:            sets.NewSet[ability.State](),
+		machine: &machine.BaseMachine{
+			StartState: state,
+			EndStates:  make(sets.Set[ability.State]),
+		},
+		cur:     state,
+		visited: sets.Set[ability.State]{},
 	}
-	builder.cur = startState
-	builder.handleCharFuncMap = map[byte]ability.HandleCharFunc{
-		'*': builder.handlerStarFunc,
-		'?': builder.handlerQueFunc,
+	builder.byteHandlerMap = map[byte]ability.ByteHandler{
+		'*': builder.starHandler,
+		'?': builder.queHandler,
 	}
 	return builder
 }
 
-func (s *SpecMachineBuilder) GetHandlerByteFunc(c byte) ability.HandleCharFunc {
-	if function, ok := s.handleCharFuncMap[c]; ok {
-		return function
-	}
-	return s.handlerDefaultFunc
+func (s *SpecMachineBuilder) GetInitMachine() ability.MachineAbility {
+	return s.machine
 }
 
-func (s *SpecMachineBuilder) handlerStarFunc(pattern string, idx int) {
+func (s *SpecMachineBuilder) GetByteHandler(c byte) ability.ByteHandler {
+	if function, ok := s.byteHandlerMap[c]; ok {
+		return function
+	}
+	return s.defaultHandler
+}
+
+func (s *SpecMachineBuilder) starHandler(pattern string, idx int) {
 	s.cur.isStringMatch = true
 }
 
-func (s *SpecMachineBuilder) handlerQueFunc(pattern string, idx int) {
+func (s *SpecMachineBuilder) queHandler(pattern string, idx int) {
 	s.cur.isSingleMatch = true
 }
 
-func (s *SpecMachineBuilder) handlerDefaultFunc(pattern string, idx int) {
+func (s *SpecMachineBuilder) defaultHandler(pattern string, idx int) {
 	cur := s.cur
 	ch := pattern[idx]
-	cur.Nexts[ch].Add(newSpecState())
+	cur.AddState(ch, newSpecState())
 	// 跳转到匹配该字符的下个状态
 	for _, nextState := range cur.Nexts[ch].ToSlices() {
 		if !s.visited.Contains(nextState) {

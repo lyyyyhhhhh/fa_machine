@@ -7,42 +7,49 @@ import (
 )
 
 type RegexMachineBuilder struct {
-	*machine.BaseMachineBuilder
+	machine *machine.BaseMachine
 
-	cur               *RegexState
-	visited           sets.Set[ability.State] // 构建状态时, 防止遇到'*'绕回去
-	uniqueState       map[int]ability.State   // 状态数最多等于正则表达式长度, 构建指针时防止重复
-	handleCharFuncMap map[byte]ability.HandleCharFunc
+	cur            *RegexState
+	visited        sets.Set[ability.State] // 构建状态时, 防止遇到'*'绕回去
+	uniqueState    map[int]ability.State   // 状态数最多等于正则表达式长度, 构建指针时防止重复
+	byteHandlerMap map[byte]ability.ByteHandler
 }
 
 func NewRegexMachineBuilder() *RegexMachineBuilder {
 	regexState := newRegexState()
 	builder := &RegexMachineBuilder{
-		BaseMachineBuilder: machine.NewBaseMachineBuilder(regexState),
-		visited:            sets.NewSet[ability.State](),
-		uniqueState:        make(map[int]ability.State),
+		machine: &machine.BaseMachine{
+			StartState: regexState,
+			EndStates:  make(sets.Set[ability.State]),
+		},
+		cur:         regexState,
+		visited:     sets.NewSet[ability.State](),
+		uniqueState: make(map[int]ability.State),
 	}
-	builder.cur = regexState
 
-	builder.handleCharFuncMap = map[byte]ability.HandleCharFunc{
-		'*': builder.handleStarFunc,
+	builder.byteHandlerMap = map[byte]ability.ByteHandler{
+		'*': builder.starHandler,
 	}
 	return builder
 }
 
-func (r *RegexMachineBuilder) GetHandlerByteFunc(c byte) ability.HandleCharFunc {
-	if function, ok := r.handleCharFuncMap[c]; ok {
+func (r *RegexMachineBuilder) GetInitMachine() ability.MachineAbility {
+	return r.machine
+}
+
+func (r *RegexMachineBuilder) GetByteHandler(c byte) ability.ByteHandler {
+	if function, ok := r.byteHandlerMap[c]; ok {
 		return function
 	}
-	return r.handlerDefaultFunc
+	return r.defaultHandler
 }
 
 func (r *RegexMachineBuilder) getMachine() *machine.BaseMachine {
-	return r.Machine
+	return r.machine
 }
 
 // 遇到*, 表示此状态可以通过前面的字符到达原状态, 不推进状态
-func (r *RegexMachineBuilder) handleStarFunc(pattern string, idx int) {
+func (r *RegexMachineBuilder) starHandler(pattern string, idx int) {
 	cur := r.cur
 
 	ch := pattern[idx-1]
@@ -56,7 +63,7 @@ func (r *RegexMachineBuilder) handleStarFunc(pattern string, idx int) {
 }
 
 // 默认字符处理方式, 推进状态
-func (r *RegexMachineBuilder) handlerDefaultFunc(pattern string, idx int) {
+func (r *RegexMachineBuilder) defaultHandler(pattern string, idx int) {
 	cur := r.cur
 
 	ch := pattern[idx]

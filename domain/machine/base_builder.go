@@ -1,32 +1,35 @@
 package machine
 
 import (
-	"fa_machine/common/sets"
 	"fa_machine/domain/machine/ability"
-	"fmt"
 )
 
-type BaseMachineBuilder struct {
+type MachineBuilder struct {
 	Machine *BaseMachine
+	this    ability.BuildStateAbility
 }
 
-// NewBaseMachineBuilder 注入子类状态节点
-func NewBaseMachineBuilder(startState ability.State) *BaseMachineBuilder {
-	return &BaseMachineBuilder{
-		Machine: &BaseMachine{
-			StartState: startState,
-			EndStates:  sets.NewSet[ability.State](),
-		},
-	}
+func NewMachineBuilder() *MachineBuilder {
+	return &MachineBuilder{}
 }
 
-func (r *BaseMachineBuilder) BuildMachine(pattern string, handleLogic ability.HandleCharAbility) (ability.MachineAbility, error) {
-	machine := r.Machine
+// Init 注入初始状态机以及状态转移or其他能力
+func (b *MachineBuilder) Init(ext ability.BuildStateAbility) {
+	b.Machine = ext.GetInitMachine().(*BaseMachine)
+	b.this = ext
+}
+
+// BuildMachine 能力编排 control
+func (b *MachineBuilder) BuildMachine(pattern string) (ability.MachineAbility, error) {
+	// 1. 构建状态机
+	machine := b.Machine
 	cur := machine.StartState
 	for i := 0; i < len(pattern); i++ {
-		handleLogic.GetHandlerByteFunc(pattern[i])(pattern, i)
+		b.this.GetByteHandler(pattern[i])(pattern, i)
 	}
 	machine.EndStates.Add(cur)
-	fmt.Println(machine.ToDot())
+	// 2. 打印状态机
+	machine.ToDot()
+	// ...
 	return machine, nil
 }
