@@ -38,7 +38,7 @@ func (r *RegexMachineBuilder) GetHandlerByteFunc(c byte) ability.HandleCharFunc 
 }
 
 func (r *RegexMachineBuilder) getMachine() *machine.BaseMachine {
-	return r.BaseMachineBuilder.Machine
+	return r.Machine
 }
 
 // 遇到*, 表示此状态可以通过前面的字符到达原状态, 不推进状态

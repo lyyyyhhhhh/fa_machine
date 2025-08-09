@@ -1,7 +1,6 @@
 package special
 
 import (
-	"fa_machine/common/sets"
 	"fa_machine/domain/machine"
 	"fa_machine/domain/machine/ability"
 )
@@ -34,8 +33,4 @@ func (node *SpecState) Process(c byte) []ability.State {
 	}
 
 	return states
-}
-
-func (node *SpecState) GetNexts() map[byte]sets.Set[ability.State] {
-	return node.Nexts
 }

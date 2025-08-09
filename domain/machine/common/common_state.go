@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fa_machine/common/sets"
 	"fa_machine/domain/machine"
 	"fa_machine/domain/machine/ability"
 )
@@ -15,10 +14,6 @@ func newCommonState() *CommonState {
 	return &CommonState{
 		BaseState: machine.NewBaseState(),
 	}
-}
-
-func (node *CommonState) GetNexts() map[byte]sets.Set[ability.State] {
-	return node.Nexts
 }
 
 func (node *CommonState) Process(c byte) []ability.State {
